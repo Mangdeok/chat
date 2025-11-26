@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>고객 지원 챗봇</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chatbot-container {
+            width: 90%;
+            max-width: 450px;
+            height: 650px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f5f5;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .message.bot .message-bubble {
+            background: white;
+            color: #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .question-buttons {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .question-buttons.vertical {
+            flex-direction: column;
+        }
+
+        .question-buttons::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .question-buttons::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 3px;
+        }
+
+        .question-btn {
+            padding: 12px 20px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .question-btn:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .question-btn:active {
+            transform: translateY(0);
+        }
+
+        .back-btn {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .back-btn:hover {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 18px;
+            width: fit-content;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chat-header">
+            💬 고객 지원 챗봇
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-bubble">
+                    안녕하세요! 무엇을 도와드릴까요?
+                </div>
+            </div>
+            <div class="typing-indicator" id="typingIndicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <div class="question-buttons" id="questionButtons"></div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const questionButtonsContainer = document.getElementById('questionButtons');
+
+        // 트리 구조의 질문과 답변 데이터
+        const chatTree = {
+            main: {
+                buttons: [
+                    { id: 'company', text: '🏢 회사 정보', type: 'submenu' },
+                    { id: 'product', text: '📦 제품 정보', type: 'submenu' },
+                    { id: 'order', text: '🛒 주문/배송', type: 'submenu' },
+                    { id: 'support', text: '💬 고객 지원', type: 'submenu' }
+                ]
+            },
+            company: {
+                buttons: [
+                    { id: 'company_hours', text: '🕐 영업시간', type: 'answer', answer: '영업시간은 평일 오전 9시부터 오후 6시까지입니다.\n주말 및 공휴일은 휴무입니다.' },
+                    { id: 'company_location', text: '📍 위치', type: 'answer', answer: '📍 서울특별시 강남구 테헤란로 123\n강남역 2번 출구에서 도보 5분 거리입니다.' },
+                    { id: 'company_contact', text: '📞 연락처', type: 'submenu' },
+                    { id: 'back', text: '← 처음으로', type: 'back' }
+                ]
+            },
+            company_contact: {
+                buttons: [
+                    { id: 'contact_phone', text: '📞 전화번호', type: 'answer', answer: '📞 고객센터: 02-1234-5678\n상담 가능 시간: 평일 09:00 - 18:00' },
+                    { id: 'contact_email', text: '✉️ 이메일', type: 'answer', answer: '✉️ 이메일: support@example.com\n1-2 영업일 내에 답변드립니다.' },
+                    { id: 'contact_fax', text: '📠 팩스', type: 'answer', answer: '📠 팩스: 02-1234-5679' },
+                    { id: 'back', text: '← 뒤로', type: 'back' }
+                ]
+            },
+            product: {
+                buttons: [
+                    { id: 'product_price', text: '💰 가격 정보', type: 'answer', answer: '💰 제품별로 가격이 다릅니다.\n자세한 내용은 홈페이지 가격표를 참고해주세요.\n대량 구매 시 할인 혜택이 있습니다.' },
+                    { id: 'product_catalog', text: '📋 제품 카탈로그', type: 'answer', answer: '📋 전체 제품 카탈로그는 홈페이지에서\n다운로드 가능합니다.' },
+                    { id: 'product_warranty', text: '🛡️ 품질 보증', type: 'answer', answer: '🛡️ 모든 제품은 1년 품질 보증이 제공됩니다.\n제조상 하자 발견 시 무상 교환해드립니다.' },
+                    { id: 'back', text: '← 처음으로', type: 'back' }
+                ]
+            },
+            order: {
+                buttons: [
+                    { id: 'order_delivery', text: '🚚 배송 안내', type: 'answer', answer: '🚚 배송 안내\n• 평일 오후 3시 이전 주문: 당일 발송\n• 배송 기간: 2-3일 소요\n• 제주/도서산간: 추가 1-2일' },
+                    { id: 'order_tracking', text: '📦 배송 조회', type: 'answer', answer: '📦 주문하신 상품의 배송 조회는\n홈페이지 마이페이지에서 확인 가능합니다.' },
+                    { id: 'order_return', text: '↩️ 환불 정책', type: 'answer', answer: '↩️ 환불 정책\n• 구매 후 7일 이내 환불 가능\n• 미개봉 제품에 한함\n• 환불 처리: 3-5 영업일' },
+                    { id: 'back', text: '← 처음으로', type: 'back' }
+                ]
+            },
+            support: {
+                buttons: [
+                    { id: 'support_faq', text: '❓ 자주 묻는 질문', type: 'answer', answer: '❓ 자주 묻는 질문은 홈페이지\nFAQ 섹션에서 확인하실 수 있습니다.' },
+                    { id: 'support_as', text: '🔧 A/S 문의', type: 'answer', answer: '🔧 A/S 문의는 고객센터로 연락주시면\n신속하게 처리해드리겠습니다.\n📞 02-1234-5678' },
+                    { id: 'support_complaint', text: '📝 불만 접수', type: 'answer', answer: '📝 불편하신 점이 있으시면 고객의 소리를\n통해 접수해주시기 바랍니다.\n성심성의껏 해결해드리겠습니다.' },
+                    { id: 'back', text: '← 처음으로', type: 'back' }
+                ]
+            }
+        };
+
+        let currentMenu = 'main';
+        let menuHistory = [];
+
+        function addMessage(text, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            bubbleDiv.style.whiteSpace = 'pre-line';
+            bubbleDiv.textContent = text;
+            
+            messageDiv.appendChild(bubbleDiv);
+            chatMessages.insertBefore(messageDiv, typingIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            typingIndicator.style.display = 'block';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            typingIndicator.style.display = 'none';
+        }
+
+        function renderButtons(menuId) {
+            questionButtonsContainer.innerHTML = '';
+            const menu = chatTree[menuId];
+            
+            // 모든 메뉴 세로 정렬
+            questionButtonsContainer.classList.add('vertical');
+            
+            if (menu) {
+                menu.buttons.forEach(button => {
+                    const btn = document.createElement('button');
+                    btn.className = button.type === 'back' ? 'question-btn back-btn' : 'question-btn';
+                    btn.textContent = button.text;
+                    btn.onclick = () => handleButtonClick(button);
+                    questionButtonsContainer.appendChild(btn);
+                });
+            }
+        }
+
+        function handleButtonClick(button) {
+            if (button.type === 'back') {
+                if (menuHistory.length > 0) {
+                    currentMenu = menuHistory.pop();
+                } else {
+                    currentMenu = 'main';
+                }
+                renderButtons(currentMenu);
+                return;
+            }
+
+            addMessage(button.text, true);
+
+            if (button.type === 'answer') {
+                showTypingIndicator();
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    addMessage(button.answer, false);
+                }, 800);
+            } else if (button.type === 'submenu') {
+                menuHistory.push(currentMenu);
+                currentMenu = button.id;
+                renderButtons(currentMenu);
+            }
+        }
+
+        // 초기 버튼 렌더링
+        renderButtons('main');
+    </script>
+</body>
+</html>
