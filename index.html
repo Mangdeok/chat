@@ -5,234 +5,289 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>고객 지원 챗봇</title>
     <style>
+        /* 모든 요소의 기본 여백과 패딩 제거 */
         * {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            box-sizing: border-box; /* 패딩과 테두리를 width/height에 포함 */
         }
 
+        /* body 전체 스타일 - 챗봇이 화면 전체를 채우도록 설정 */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* 시스템 기본 폰트 사용 */
+            background: transparent; /* 배경을 투명하게 (팝업에서 깔끔하게 보임) */
             margin: 0;
             padding: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            height: 100vh; /* 화면 전체 높이 */
+            display: flex; /* flexbox 레이아웃 사용 */
+            justify-content: center; /* 가로 중앙 정렬 */
+            align-items: center; /* 세로 중앙 정렬 */
         }
 
+        /* 챗봇 전체 컨테이너 - 헤더, 메시지, 버튼 영역을 담는 박스 */
         .chatbot-container {
-            width: 100%;
-            height: 100vh;
-            background: white;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            width: 100%; /* 너비 100% */
+            height: 100vh; /* 높이 100% */
+            background: white; /* 흰색 배경 */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); /* 그림자 효과 */
+            display: flex; /* flexbox 레이아웃 */
+            flex-direction: column; /* 세로 방향으로 요소 배치 */
+            overflow: hidden; /* 넘치는 내용 숨김 */
         }
 
+        /* 챗봇 상단 헤더 - 제목이 표시되는 영역 */
         .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 보라색 그라데이션 배경 */
+            color: white; /* 흰색 글자 */
+            padding: 20px; /* 안쪽 여백 */
+            text-align: center; /* 텍스트 중앙 정렬 */
+            font-size: 20px; /* 글자 크기 */
+            font-weight: bold; /* 글자 굵게 */
         }
 
+        /* 채팅 메시지가 표시되는 영역 */
         .chat-messages {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background: #f5f5f5;
+            flex: 1; /* 남은 공간을 모두 차지 */
+            padding: 20px; /* 안쪽 여백 */
+            overflow-y: auto; /* 세로 스크롤 활성화 */
+            background: #f5f5f5; /* 연한 회색 배경 */
         }
 
+        /* 각 메시지 하나의 스타일 */
         .message {
-            margin-bottom: 15px;
-            display: flex;
-            animation: fadeIn 0.3s;
+            margin-bottom: 15px; /* 메시지 사이 간격 */
+            display: flex; /* flexbox 사용 */
+            animation: fadeIn 0.3s; /* 나타날 때 애니메이션 효과 */
         }
 
+        /* 메시지가 나타날 때 애니메이션 정의 */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { 
+                opacity: 0; /* 투명한 상태에서 시작 */
+                transform: translateY(10px); /* 아래에서 위로 이동 */
+            }
+            to { 
+                opacity: 1; /* 완전히 보이는 상태 */
+                transform: translateY(0); /* 원래 위치 */
+            }
         }
 
+        /* 봇의 메시지 (왼쪽 정렬) */
         .message.bot {
-            justify-content: flex-start;
+            justify-content: flex-start; /* 왼쪽 정렬 */
         }
 
+        /* 사용자의 메시지 (오른쪽 정렬) */
         .message.user {
-            justify-content: flex-end;
+            justify-content: flex-end; /* 오른쪽 정렬 */
         }
 
+        /* 메시지 말풍선 스타일 */
         .message-bubble {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            word-wrap: break-word;
+            max-width: 70%; /* 최대 너비 70% */
+            padding: 12px 16px; /* 안쪽 여백 */
+            border-radius: 18px; /* 둥근 모서리 */
+            word-wrap: break-word; /* 긴 단어는 줄바꿈 */
         }
 
+        /* 봇 메시지의 말풍선 스타일 */
         .message.bot .message-bubble {
-            background: white;
-            color: #333;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: white; /* 흰색 배경 */
+            color: #333; /* 어두운 회색 글자 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 약한 그림자 */
         }
 
+        /* 사용자 메시지의 말풍선 스타일 */
         .message.user .message-bubble {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 보라색 그라데이션 배경 */
+            color: white; /* 흰색 글자 */
         }
 
+        /* 버튼이 표시되는 하단 영역 */
         .chat-input-area {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #e0e0e0;
+            padding: 20px; /* 안쪽 여백 */
+            background: white; /* 흰색 배경 */
+            border-top: 1px solid #e0e0e0; /* 위쪽 구분선 */
         }
 
+        /* 질문 버튼들을 담는 컨테이너 */
         .question-buttons {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 5px;
+            display: flex; /* flexbox 사용 */
+            gap: 10px; /* 버튼 사이 간격 */
+            overflow-x: auto; /* 가로 스크롤 활성화 */
+            padding-bottom: 5px; /* 아래 여백 (스크롤바 공간) */
         }
 
+        /* 버튼을 세로로 배치 (메인 메뉴 등에서 사용) */
         .question-buttons.vertical {
-            flex-direction: column;
+            flex-direction: column; /* 세로 방향 배치 */
         }
 
+        /* 가로 스크롤바 스타일 */
         .question-buttons::-webkit-scrollbar {
-            height: 6px;
+            height: 6px; /* 스크롤바 높이 */
         }
 
+        /* 스크롤바 thumb(움직이는 부분) 스타일 */
         .question-buttons::-webkit-scrollbar-thumb {
-            background: #667eea;
-            border-radius: 3px;
+            background: #667eea; /* 보라색 배경 */
+            border-radius: 3px; /* 둥근 모서리 */
         }
 
+        /* 각 질문 버튼의 기본 스타일 */
         .question-btn {
-            padding: 12px 20px;
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s;
-            white-space: nowrap;
-            flex-shrink: 0;
+            padding: 12px 20px; /* 안쪽 여백 */
+            background: white; /* 흰색 배경 */
+            color: #667eea; /* 보라색 글자 */
+            border: 2px solid #667eea; /* 보라색 테두리 */
+            border-radius: 12px; /* 둥근 모서리 */
+            cursor: pointer; /* 마우스 올리면 손가락 모양 */
+            font-size: 14px; /* 글자 크기 */
+            font-weight: 500; /* 글자 중간 굵기 */
+            transition: all 0.3s; /* 모든 변화에 0.3초 애니메이션 */
+            white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+            flex-shrink: 0; /* 크기 축소 방지 */
         }
 
+        /* 버튼에 마우스를 올렸을 때 */
         .question-btn:hover {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 보라색 그라데이션 배경 */
+            color: white; /* 흰색 글자 */
+            transform: translateY(-2px); /* 위로 2px 이동 */
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); /* 그림자 효과 */
         }
 
+        /* 버튼을 클릭했을 때 */
         .question-btn:active {
-            transform: translateY(0);
+            transform: translateY(0); /* 원래 위치로 복귀 */
         }
 
+        /* 뒤로가기 버튼 스타일 (일반 버튼과 다른 색상) */
         .back-btn {
-            background: #f0f0f0;
-            color: #333;
-            border: 2px solid #ddd;
+            background: #f0f0f0; /* 연한 회색 배경 */
+            color: #333; /* 어두운 회색 글자 */
+            border: 2px solid #ddd; /* 회색 테두리 */
         }
 
+        /* 뒤로가기 버튼에 마우스 올렸을 때 */
         .back-btn:hover {
-            background: #e0e0e0;
-            color: #333;
+            background: #e0e0e0; /* 조금 더 어두운 회색 */
+            color: #333; /* 글자색 유지 */
         }
 
+        /* 봇이 입력중일 때 표시되는 애니메이션 */
         .typing-indicator {
-            display: none;
-            padding: 12px 16px;
-            background: white;
-            border-radius: 18px;
-            width: fit-content;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none; /* 기본적으로 숨김 */
+            padding: 12px 16px; /* 안쪽 여백 */
+            background: white; /* 흰색 배경 */
+            border-radius: 18px; /* 둥근 모서리 */
+            width: fit-content; /* 내용에 맞는 너비 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 약한 그림자 */
         }
 
+        /* 타이핑 애니메이션의 각 점 */
         .typing-indicator span {
-            height: 8px;
-            width: 8px;
-            background: #667eea;
-            border-radius: 50%;
-            display: inline-block;
-            margin: 0 2px;
-            animation: bounce 1.4s infinite;
+            height: 8px; /* 점 높이 */
+            width: 8px; /* 점 너비 */
+            background: #667eea; /* 보라색 */
+            border-radius: 50%; /* 원형 */
+            display: inline-block; /* 가로로 나열 */
+            margin: 0 2px; /* 점 사이 간격 */
+            animation: bounce 1.4s infinite; /* 튀는 애니메이션 무한 반복 */
         }
 
+        /* 두 번째 점은 0.2초 지연 */
         .typing-indicator span:nth-child(2) {
             animation-delay: 0.2s;
         }
 
+        /* 세 번째 점은 0.4초 지연 */
         .typing-indicator span:nth-child(3) {
             animation-delay: 0.4s;
         }
 
+        /* 점이 위아래로 튀는 애니메이션 정의 */
         @keyframes bounce {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-10px); }
+            0%, 60%, 100% { 
+                transform: translateY(0); /* 원래 위치 */
+            }
+            30% { 
+                transform: translateY(-10px); /* 위로 10px 이동 */
+            }
         }
     </style>
 </head>
 <body>
+    <!-- 챗봇 전체를 담는 컨테이너 -->
     <div class="chatbot-container">
+        <!-- 상단 헤더 -->
         <div class="chat-header">
             💬 고객 지원 챗봇
         </div>
+        
+        <!-- 채팅 메시지가 표시되는 영역 -->
         <div class="chat-messages" id="chatMessages">
+            <!-- 첫 인사 메시지 (봇) -->
             <div class="message bot">
                 <div class="message-bubble">
                     안녕하세요! 무엇을 도와드릴까요?
                 </div>
             </div>
+            
+            <!-- 봇이 답변 준비중일 때 표시되는 타이핑 애니메이션 -->
             <div class="typing-indicator" id="typingIndicator">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
         </div>
+        
+        <!-- 하단 버튼 영역 -->
         <div class="chat-input-area">
             <div class="question-buttons" id="questionButtons"></div>
         </div>
     </div>
 
     <script>
-        const chatMessages = document.getElementById('chatMessages');
-        const typingIndicator = document.getElementById('typingIndicator');
-        const questionButtonsContainer = document.getElementById('questionButtons');
+        // HTML 요소들을 변수에 저장
+        const chatMessages = document.getElementById('chatMessages'); // 메시지 표시 영역
+        const typingIndicator = document.getElementById('typingIndicator'); // 타이핑 애니메이션
+        const questionButtonsContainer = document.getElementById('questionButtons'); // 버튼 컨테이너
 
         // 트리 구조의 질문과 답변 데이터
+        // main = 첫 화면, 각 id는 하위 메뉴를 의미
         const chatTree = {
+            // 메인 메뉴 (첫 화면)
             main: {
                 buttons: [
-                    { id: 'company', text: '🏢 회사 정보', type: 'submenu' },
+                    { id: 'company', text: '🏢 회사 정보', type: 'submenu' }, // 하위 메뉴로 이동
                     { id: 'product', text: '📦 제품 정보', type: 'submenu' },
                     { id: 'order', text: '🛒 주문/배송', type: 'submenu' },
                     { id: 'support', text: '💬 고객 지원', type: 'submenu' }
                 ]
             },
+            
+            // 회사 정보 메뉴
             company: {
                 buttons: [
-                    { id: 'company_hours', text: '🕐 영업시간', type: 'answer', answer: '영업시간은 평일 오전 9시부터 오후 6시까지입니다.\n주말 및 공휴일은 휴무입니다.' },
+                    { id: 'company_hours', text: '🕐 영업시간', type: 'answer', answer: '영업시간은 평일 오전 9시부터 오후 6시까지입니다.\n주말 및 공휴일은 휴무입니다.' }, // 답변 표시
                     { id: 'company_location', text: '📍 위치', type: 'answer', answer: '📍 서울특별시 강남구 테헤란로 123\n강남역 2번 출구에서 도보 5분 거리입니다.' },
-                    { id: 'company_contact', text: '📞 연락처', type: 'submenu' },
-                    { id: 'back', text: '← 처음으로', type: 'back' }
+                    { id: 'company_contact', text: '📞 연락처', type: 'submenu' }, // 연락처 하위 메뉴로 이동
+                    { id: 'back', text: '← 처음으로', type: 'back' } // 메인으로 돌아가기
                 ]
             },
+            
+            // 연락처 하위 메뉴
             company_contact: {
                 buttons: [
                     { id: 'contact_phone', text: '📞 전화번호', type: 'answer', answer: '📞 고객센터: 02-1234-5678\n상담 가능 시간: 평일 09:00 - 18:00' },
                     { id: 'contact_email', text: '✉️ 이메일', type: 'answer', answer: '✉️ 이메일: support@example.com\n1-2 영업일 내에 답변드립니다.' },
                     { id: 'contact_fax', text: '📠 팩스', type: 'answer', answer: '📠 팩스: 02-1234-5679' },
-                    { id: 'back', text: '← 뒤로', type: 'back' }
+                    { id: 'back', text: '← 뒤로', type: 'back' } // 이전 메뉴로 돌아가기
                 ]
             },
+            
+            // 제품 정보 메뉴
             product: {
                 buttons: [
                     { id: 'product_price', text: '💰 가격 정보', type: 'answer', answer: '💰 제품별로 가격이 다릅니다.\n자세한 내용은 홈페이지 가격표를 참고해주세요.\n대량 구매 시 할인 혜택이 있습니다.' },
@@ -241,6 +296,8 @@
                     { id: 'back', text: '← 처음으로', type: 'back' }
                 ]
             },
+            
+            // 주문/배송 메뉴
             order: {
                 buttons: [
                     { id: 'order_delivery', text: '🚚 배송 안내', type: 'answer', answer: '🚚 배송 안내\n• 평일 오후 3시 이전 주문: 당일 발송\n• 배송 기간: 2-3일 소요\n• 제주/도서산간: 추가 1-2일' },
@@ -249,6 +306,8 @@
                     { id: 'back', text: '← 처음으로', type: 'back' }
                 ]
             },
+            
+            // 고객 지원 메뉴
             support: {
                 buttons: [
                     { id: 'support_faq', text: '❓ 자주 묻는 질문', type: 'answer', answer: '❓ 자주 묻는 질문은 홈페이지\nFAQ 섹션에서 확인하실 수 있습니다.' },
@@ -259,77 +318,90 @@
             }
         };
 
-        let currentMenu = 'main';
-        let menuHistory = [];
+        let currentMenu = 'main'; // 현재 표시중인 메뉴 (처음엔 메인)
+        let menuHistory = []; // 메뉴 이동 기록 (뒤로가기 위해 저장)
 
+        // 메시지를 채팅창에 추가하는 함수
+        // text: 메시지 내용, isUser: true면 사용자 메시지, false면 봇 메시지
         function addMessage(text, isUser) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            const messageDiv = document.createElement('div'); // 메시지를 담을 div 생성
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`; // 사용자/봇에 따라 클래스 지정
             
-            const bubbleDiv = document.createElement('div');
+            const bubbleDiv = document.createElement('div'); // 말풍선 div 생성
             bubbleDiv.className = 'message-bubble';
-            bubbleDiv.style.whiteSpace = 'pre-line';
-            bubbleDiv.textContent = text;
+            bubbleDiv.style.whiteSpace = 'pre-line'; // 줄바꿈(\n) 적용되도록 설정
+            bubbleDiv.textContent = text; // 메시지 텍스트 설정
             
-            messageDiv.appendChild(bubbleDiv);
-            chatMessages.insertBefore(messageDiv, typingIndicator);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            messageDiv.appendChild(bubbleDiv); // 말풍선을 메시지에 추가
+            chatMessages.insertBefore(messageDiv, typingIndicator); // 타이핑 애니메이션 앞에 삽입
+            chatMessages.scrollTop = chatMessages.scrollHeight; // 스크롤을 맨 아래로 이동
         }
 
+        // 타이핑 애니메이션 표시
         function showTypingIndicator() {
-            typingIndicator.style.display = 'block';
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            typingIndicator.style.display = 'block'; // 보이게 설정
+            chatMessages.scrollTop = chatMessages.scrollHeight; // 스크롤을 맨 아래로
         }
 
+        // 타이핑 애니메이션 숨김
         function hideTypingIndicator() {
-            typingIndicator.style.display = 'none';
+            typingIndicator.style.display = 'none'; // 숨김
         }
 
+        // 버튼을 화면에 그리는 함수
+        // menuId: 표시할 메뉴의 id (main, company, product 등)
         function renderButtons(menuId) {
-            questionButtonsContainer.innerHTML = '';
-            const menu = chatTree[menuId];
+            questionButtonsContainer.innerHTML = ''; // 기존 버튼 모두 제거
+            const menu = chatTree[menuId]; // 해당 메뉴의 데이터 가져오기
             
-            // 모든 메뉴 세로 정렬
+            // 모든 메뉴를 세로로 배치
             questionButtonsContainer.classList.add('vertical');
             
             if (menu) {
+                // 메뉴의 각 버튼을 생성
                 menu.buttons.forEach(button => {
-                    const btn = document.createElement('button');
-                    btn.className = button.type === 'back' ? 'question-btn back-btn' : 'question-btn';
-                    btn.textContent = button.text;
-                    btn.onclick = () => handleButtonClick(button);
-                    questionButtonsContainer.appendChild(btn);
+                    const btn = document.createElement('button'); // 버튼 요소 생성
+                    btn.className = button.type === 'back' ? 'question-btn back-btn' : 'question-btn'; // 뒤로가기 버튼은 다른 스타일
+                    btn.textContent = button.text; // 버튼 텍스트 설정
+                    btn.onclick = () => handleButtonClick(button); // 클릭 이벤트 연결
+                    questionButtonsContainer.appendChild(btn); // 컨테이너에 버튼 추가
                 });
             }
         }
 
+        // 버튼 클릭 처리 함수
         function handleButtonClick(button) {
+            // 뒤로가기 버튼 처리
             if (button.type === 'back') {
                 if (menuHistory.length > 0) {
-                    currentMenu = menuHistory.pop();
+                    currentMenu = menuHistory.pop(); // 이전 메뉴로 복귀
                 } else {
-                    currentMenu = 'main';
+                    currentMenu = 'main'; // 기록이 없으면 메인으로
                 }
-                renderButtons(currentMenu);
+                renderButtons(currentMenu); // 버튼 다시 그리기
                 return;
             }
 
+            // 사용자가 선택한 버튼을 메시지로 추가
             addMessage(button.text, true);
 
+            // 답변 타입 버튼 처리
             if (button.type === 'answer') {
-                showTypingIndicator();
+                showTypingIndicator(); // 타이핑 애니메이션 표시
                 setTimeout(() => {
-                    hideTypingIndicator();
-                    addMessage(button.answer, false);
+                    hideTypingIndicator(); // 0.8초 후 애니메이션 숨김
+                    addMessage(button.answer, false); // 봇의 답변 표시
                 }, 800);
-            } else if (button.type === 'submenu') {
-                menuHistory.push(currentMenu);
-                currentMenu = button.id;
-                renderButtons(currentMenu);
+            } 
+            // 하위 메뉴로 이동하는 버튼 처리
+            else if (button.type === 'submenu') {
+                menuHistory.push(currentMenu); // 현재 메뉴를 기록에 저장
+                currentMenu = button.id; // 새 메뉴로 이동
+                renderButtons(currentMenu); // 버튼 다시 그리기
             }
         }
 
-        // 초기 버튼 렌더링
+        // 페이지 로드 시 메인 메뉴 버튼 표시
         renderButtons('main');
     </script>
 </body>
